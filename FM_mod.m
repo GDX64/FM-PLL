@@ -5,11 +5,11 @@ clc
 
 MI=[0.1272    4.5396    0.0507]*1e4; %Pll constants
 nL=0.1; %noise level
-bitRate=10; %Hz
+bitRate=16; %Hz
 sc=10; %scale factor for the integration process
 f0=2000; %central frequency
 ppc=128; %points per cicle
-Nbits=10; %Number of random bits
+Nbits=100; %Number of random bits
 msg_original=randi([0 1],1,Nbits); %message to be trasmited
 Fs=f0*ppc; %sample frequency
 T_bit=1/bitRate; %bit period
@@ -17,9 +17,10 @@ t_end=length(msg_original)*T_bit; %end time
 N=round(t_end*Fs); %number of samples
 t=linspace(0,t_end,N); %time vector
 
-msg=repelem(msg_original,10); %That's for the linear interpolation
+msg=repelem(msg_original,10); %That's for the ~linear~ ZOH interpolation
 interp_msg=interp1(linspace(0,t_end,length(msg)),msg,t); %interpolation of message with time
 theta_m=sc*cumsum(interp_msg)/Fs; %message integral
+theta_m=theta_m+2*randn(1,length(theta_m));%phase noise
 
 s=sin(f0*2*pi*t+theta_m)+randn(1,N)*nL; %signal transmited
 
@@ -54,4 +55,6 @@ figure
 periodogram(s)
 
 
-
+msg_dem=decan(msg_dem>5,16000);
+plot(msg_dem)
+ber= 1-sum(msg_dem==msg_original)/length(msg_dem)
